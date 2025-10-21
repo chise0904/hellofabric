@@ -1,0 +1,201 @@
+Organizations:
+  - &OrdererOrg
+    Name: OrdererMSP
+    ID: OrdererMSP
+    MSPDir: organizations/ordererOrganizations/msp
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('OrdererMSP.member')"
+      Writers:
+        Type: Signature
+        Rule: "OR('OrdererMSP.member')"
+      Admins:
+        Type: Signature
+        Rule: "OR('OrdererMSP.admin')"
+    OrdererEndpoints:
+      - orderer1.orderer.financial.com:7050
+      - orderer2.orderer.financial.com:7051
+      - orderer3.orderer.financial.com:7052
+
+  - &BankA
+    Name: BankAMSP
+    ID: BankAMSP
+    MSPDir: organizations/peerOrganizations/banka/msp
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('BankAMSP.admin', 'BankAMSP.peer', 'BankAMSP.client')"
+      Writers:
+        Type: Signature
+        Rule: "OR('BankAMSP.admin', 'BankAMSP.client')"
+      Admins:
+        Type: Signature
+        Rule: "OR('BankAMSP.admin')"
+      Endorsement:
+        Type: Signature
+        Rule: "OR('BankAMSP.peer')"
+    AnchorPeers:
+      - Host: peer0.banka.financial.com
+        Port: 7051
+
+  - &BankB
+    Name: BankBMSP
+    ID: BankBMSP
+    MSPDir: organizations/peerOrganizations/bankb/msp
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('BankBMSP.admin', 'BankBMSP.peer', 'BankBMSP.client')"
+      Writers:
+        Type: Signature
+        Rule: "OR('BankBMSP.admin', 'BankBMSP.client')"
+      Admins:
+        Type: Signature
+        Rule: "OR('BankBMSP.admin')"
+      Endorsement:
+        Type: Signature
+        Rule: "OR('BankBMSP.peer')"
+    AnchorPeers:
+      - Host: peer0.bankb.financial.com
+        Port: 9051
+
+  - &InsuranceCo
+    Name: InsuranceCoMSP
+    ID: InsuranceCoMSP
+    MSPDir: organizations/peerOrganizations/insurance/msp
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('InsuranceCoMSP.admin', 'InsuranceCoMSP.peer', 'InsuranceCoMSP.client')"
+      Writers:
+        Type: Signature
+        Rule: "OR('InsuranceCoMSP.admin', 'InsuranceCoMSP.client')"
+      Admins:
+        Type: Signature
+        Rule: "OR('InsuranceCoMSP.admin')"
+      Endorsement:
+        Type: Signature
+        Rule: "OR('InsuranceCoMSP.peer')"
+    AnchorPeers:
+      - Host: peer0.insurance.financial.com
+        Port: 11051
+
+Capabilities:
+  Channel: &ChannelCapabilities
+    V2_0: true
+  Orderer: &OrdererCapabilities
+    V2_0: true
+  Application: &ApplicationCapabilities
+    V2_5: true
+
+Application: &ApplicationDefaults
+  Organizations:
+  Policies:
+    Readers:
+      Type: ImplicitMeta
+      Rule: "ANY Readers"
+    Writers:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+    Admins:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Admins"
+    LifecycleEndorsement:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Endorsement"
+    Endorsement:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Endorsement"
+  Capabilities:
+    <<: *ApplicationCapabilities
+
+Orderer: &OrdererDefaults
+  OrdererType: etcdraft
+  Addresses:
+    - orderer1.orderer.financial.com:7050
+    - orderer2.orderer.financial.com:7051
+    - orderer3.orderer.financial.com:7052
+  EtcdRaft:
+    Consenters:
+      - Host: orderer1.orderer.financial.com
+        Port: 7050
+        ClientTLSCert: organizations/ordererOrganizations/orderers/orderer1.orderer.financial.com/tls/server.crt
+        ServerTLSCert: organizations/ordererOrganizations/orderers/orderer1.orderer.financial.com/tls/server.crt
+      - Host: orderer2.orderer.financial.com
+        Port: 7051
+        ClientTLSCert: organizations/ordererOrganizations/orderers/orderer2.orderer.financial.com/tls/server.crt
+        ServerTLSCert: organizations/ordererOrganizations/orderers/orderer2.orderer.financial.com/tls/server.crt
+      - Host: orderer3.orderer.financial.com
+        Port: 7052
+        ClientTLSCert: organizations/ordererOrganizations/orderers/orderer3.orderer.financial.com/tls/server.crt
+        ServerTLSCert: organizations/ordererOrganizations/orderers/orderer3.orderer.financial.com/tls/server.crt
+  BatchTimeout: 2s
+  BatchSize:
+    MaxMessageCount: 10
+    AbsoluteMaxBytes: 99 MB
+    PreferredMaxBytes: 512 KB
+  Organizations:
+  Policies:
+    Readers:
+      Type: ImplicitMeta
+      Rule: "ANY Readers"
+    Writers:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+    Admins:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Admins"
+    BlockValidation:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+
+Channel: &ChannelDefaults
+  Policies:
+    Readers:
+      Type: ImplicitMeta
+      Rule: "ANY Readers"
+    Writers:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+    Admins:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Admins"
+  Capabilities:
+    <<: *ChannelCapabilities
+
+Profiles:
+  ThreeOrgsOrdererGenesis:
+    <<: *ChannelDefaults
+    Orderer:
+      <<: *OrdererDefaults
+      Organizations:
+        - *OrdererOrg
+      Capabilities: *OrdererCapabilities
+    Consortiums:
+      FinancialConsortium:
+        Organizations:
+          - *BankA
+          - *BankB
+          - *InsuranceCo
+
+  BankingChannel:
+    Consortium: FinancialConsortium
+    <<: *ChannelDefaults
+    Application:
+      <<: *ApplicationDefaults
+      Organizations:
+        - *BankA
+        - *BankB
+      Capabilities: *ApplicationCapabilities
+
+  InsuranceChannel:
+    Consortium: FinancialConsortium
+    <<: *ChannelDefaults
+    Application:
+      <<: *ApplicationDefaults
+      Organizations:
+        - *BankB
+        - *InsuranceCo
+      Capabilities: *ApplicationCapabilities
+      
