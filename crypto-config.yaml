@@ -1,0 +1,33 @@
+OrdererOrgs:
+  - Name: Orderer
+    Domain: orderer.financial.com
+    EnableNodeOUs: true
+    Specs:
+      - Hostname: orderer1
+      - Hostname: orderer2
+      - Hostname: orderer3
+
+PeerOrgs:
+  - Name: BankA
+    Domain: banka.financial.com
+    EnableNodeOUs: true
+    Template:
+      Count: 2
+    Users:
+      Count: 2
+
+  - Name: BankB
+    Domain: bankb.financial.com
+    EnableNodeOUs: true
+    Template:
+      Count: 2
+    Users:
+      Count: 2
+
+  - Name: InsuranceCo
+    Domain: insurance.financial.com
+    EnableNodeOUs: true
+    Template:
+      Count: 2
+    Users:
+      Count: 2
